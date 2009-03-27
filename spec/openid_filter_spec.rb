@@ -36,6 +36,20 @@ describe "An OpenIDFilter" do
     response.status.should == 200
   end
 
+  it "should allow pass through of URIs defined in bypass route callback" do
+    openid_app = Rack::Builder.new {
+      use Rack::Lint
+      use Rack::Session::Pool
+      use CloudKit::OpenIDFilter, :allow => ['/foo'] do |url|
+        ['/bar'].include? url
+      end
+      run echo_env(CLOUDKIT_AUTH_KEY)
+    }
+    request = Rack::MockRequest.new(openid_app)
+    response = request.get('/bar')
+    response.status.should == 200
+  end
+
   it "should redirect to the login page if authorization is required" do
     response = @request.get('/protected')
     response.status.should == 302
@@ -75,4 +89,5 @@ describe "An OpenIDFilter" do
     end
 
   end
+
 end
